@@ -1,1 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iKomment — Dashboard</title>
+<meta name="robots" content="noindex,nofollow">
+<style>
+/* ============ iKomment Dashboard ============
+   Fluid across all four breakpoints:
+   Desktop >900 · Tablet 601-900 · Mobile-L 481-600 · Mobile-S ≤480 */
+:root{
+  --bg:#101216;--panel:#181b21;--panel2:#1f232b;--line:#2a2f3a;
+  --fg:#e8eaef;--soft:#9aa1ad;--accent:#4f7cff;--accent2:#3b5fd9;
+  --good:#3ecf8e;--bad:#ff5d5d;--warn:#ffb84d;--r:10px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--fg);font-size:16px;line-height:1.5}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit;font-size:1rem} /* 1rem floor: no iOS zoom */
+a{color:var(--accent)}
 
+/* ---------- auth screen ---------- */
+.auth{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.auth-card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:clamp(1.2rem,4vw,2rem)}
+.logo{font-weight:800;font-size:1.4rem;letter-spacing:-.02em;margin-bottom:.2rem}
+.logo span{color:var(--accent)}
+.auth-sub{color:var(--soft);font-size:.9rem;margin-bottom:1.4rem}
+.field{margin-bottom: .9rem}
+.field label{display:block;font-size:.82rem;color:var(--soft);margin-bottom:.3rem}
+.field input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem;min-height:44px}
+.field input:focus{outline:0;border-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;background:var(--accent);color:#fff;border-radius:8px;padding:.7rem 1.2rem;font-weight:600;min-height:44px;transition:background .15s}
+.btn:hover{background:var(--accent2)}
+.btn.full{width:100%}
+.btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--fg)}
+.btn.danger{background:var(--bad)}
+.btn:disabled{opacity:.5;cursor:default}
+.auth-flip{text-align:center;margin-top:1rem;font-size:.88rem;color:var(--soft)}
+.err{color:var(--bad);font-size:.85rem;margin:.5rem 0;min-height:1.2em}
+
+/* ---------- app shell ---------- */
+.app{display:none;min-height:100dvh}
+.app.on{display:flex}
+.side{width:220px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);padding:1.2rem .8rem;position:sticky;top:0;height:100dvh;display:flex;flex-direction:column}
+.side .logo{padding:0 .6rem;margin-bottom:1.4rem}
+.nav{display:flex;flex-direction:column;gap:.15rem}
+.nav button{display:flex;align-items:center;gap:.6rem;text-align:left;padding:.6rem .7rem;border-radius:8px;color:var(--soft);font-size:.92rem;min-height:42px}
+.nav button.on{background:var(--panel2);color:var(--fg)}
+.nav button:hover{color:var(--fg)}
+.side-foot{margin-top:auto;padding:.6rem;color:var(--soft);font-size:.78rem;overflow-wrap:anywhere}
+.main{flex:1;min-width:0;padding:clamp(.9rem,3vw,2rem);padding-bottom:5.5rem;max-width:980px}
+h2{font-size:1.25rem;margin-bottom:1rem}
+h3{font-size:.95rem;margin:1.3rem 0 .5rem;color:var(--soft);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* ---------- breadcrumbs ---------- */
+.crumbs{display:flex;align-items:center;gap:.15rem;flex-wrap:wrap;margin-bottom:.7rem;font-size:.82rem;color:var(--soft)}
+.crumbs button{padding:.35rem .4rem;border-radius:6px;color:var(--soft);min-height:36px}
+.crumbs button:hover{color:var(--accent)}
+.crumbs .sep{opacity:.5}
+.crumbs .here{color:var(--fg);font-weight:600;padding:.35rem .4rem}
+
+/* ---------- cards & stats ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap: .8rem;margin-bottom:1.2rem}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:.9rem 1rem}
+.stat .n{font-size:1.5rem;font-weight:700}
+.stat .l{color:var(--soft);font-size:.8rem;margin-top:.15rem}
+.attn{display:flex;align-items:center;gap:.7rem;background:rgba(255,184,77,.08);border:1px solid rgba(255,184,77,.35);border-radius:var(--r);padding:.8rem 1rem;margin-bottom:1.2rem;cursor:pointer}
+.attn b{color:var(--warn)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:1rem;margin-bottom:.8rem}
+.muted{color:var(--soft);font-size:.85rem}
+.empty{color:var(--soft);text-align:center;padding:2rem 1rem}
+
+/* ---------- moderation queue ---------- */
+.q-item{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:.9rem 1rem;margin-bottom:.7rem;touch-action:pan-y;position:relative;transition:transform .15s,opacity .2s}
+.q-meta{display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap;font-size:.82rem;margin-bottom:.35rem}
+.q-who{font-weight:600}
+.q-trust{color:var(--soft)}
+.q-body{font-size:.93rem;line-height:1.5;overflow-wrap:anywhere;margin-bottom:.6rem}
+.q-acts{display:flex;gap:.5rem;flex-wrap:wrap}
+.q-acts .btn{padding:.45rem .9rem;min-height:40px;font-size:.88rem}
+.q-acts .ok{background:var(--good)}
+.q-acts .no{background:var(--bad)}
+.swipe-hint{color:var(--soft);font-size:.78rem;text-align:center;margin-bottom:.8rem;display:none}
+
+/* ---------- toggles ---------- */
+.trow{display:flex;align-items:flex-start;gap:.8rem;padding:.75rem 0;border-bottom:1px solid var(--line)}
+.trow:last-child{border-bottom:0}
+.trow .ti{flex:1;min-width:0}
+.trow .tt{font-size:.95rem;font-weight:500}
+.trow .td{color:var(--soft);font-size:.82rem;margin-top:.1rem}
+.tag-lock{font-size:.68rem;background:rgba(255,184,77,.15);color:var(--warn);border-radius:99px;padding:.1rem .5rem;margin-left:.4rem;vertical-align:middle}
+.sw{position:relative;width:48px;height:28px;flex-shrink:0;border-radius:99px;background:var(--line);transition:background .15s;margin-top:.15rem}
+.sw.on{background:var(--accent)}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}
+.sw.on::after{left:23px}
+.mini-input{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:.35rem .5rem;width:70px;min-height:38px}
+
+/* ---------- pages ---------- */
+.search{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:.65rem .8rem;min-height:44px;margin-bottom:.9rem}
+.p-item{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:.8rem 1rem;margin-bottom:.6rem;cursor:pointer}
+.p-url{font-size:.85rem;color:var(--soft);overflow-wrap:anywhere}
+.p-title{font-weight:500;font-size:.95rem}
+.p-badge{font-size:.68rem;background:rgba(79,124,255,.15);color:var(--accent);border-radius:99px;padding:.1rem .5rem;margin-left:.4rem}
+.p-overrides{margin-top:.7rem;border-top:1px solid var(--line);padding-top:.3rem;display:none}
+.p-item.open .p-overrides{display:block}
+.tri{display:flex;gap:.3rem}
+.tri button{padding:.3rem .6rem;border-radius:6px;border:1px solid var(--line);font-size:.78rem;min-height:36px}
+.tri button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ---------- appearance ---------- */
+.style-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.preview{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:1rem;min-height:200px}
+.color-row{display:flex;gap:.5rem;flex-wrap:wrap}
+.color-dot{width:40px;height:40px;border-radius:50%;border:2px solid transparent;cursor:pointer}
+.color-dot.on{border-color:#fff}
+input[type=color]{width:40px;height:40px;border-radius:50%;border:0;padding:0;background:none;cursor:pointer}
+input[type=range]{width:100%;min-height:32px;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;padding:.55rem .4rem;font-size:.85rem;min-height:42px}
+.seg button.on{background:var(--accent);color:#fff}
+
+/* ---------- code/secret boxes ---------- */
+.code{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem;font-family:ui-monospace,monospace;font-size:.8rem;overflow-wrap:anywhere;user-select:all}
+
+/* ---------- modal (type-to-confirm) ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:1rem;z-index:50}
+.modal-bg.on{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:1.4rem;width:100%;max-width:420px}
+.modal h4{margin-bottom:.5rem}
+.modal p{color:var(--soft);font-size:.88rem;margin-bottom:.9rem}
+.modal .phrase{font-family:ui-monospace,monospace;color:var(--warn)}
+.modal input{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:.65rem .8rem;min-height:44px;margin-bottom:.9rem}
+.modal-acts{display:flex;gap:.6rem;justify-content:flex-end}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;bottom:5.5rem;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:.6rem 1.2rem;font-size:.88rem;opacity:0;transition:all .25s;z-index:60;pointer-events:none;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---------- bottom tab bar (mobile) ---------- */
+.tabs{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--line);z-index:40;padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.5rem .2rem .6rem;color:var(--soft);font-size:.68rem;min-height:54px}
+.tabs button.on{color:var(--accent)}
+.tabs .ico{font-size:1.15rem}
+
+/* ============ BREAKPOINTS ============ */
+/* Tablet 601-900 */
+@media (max-width:900px){
+  .side{width:64px;padding:1.2rem .4rem}
+  .side .logo{font-size:1rem;text-align:center;padding:0}
+  .side .logo .full-word{display:none}
+  .nav button{justify-content:center;padding:.6rem .3rem}
+  .nav button .lbl{display:none}
+  .side-foot{display:none}
+  .style-grid{grid-template-columns:1fr}
+}
+/* Mobile-L 481-600: bottom tabs replace sidebar */
+@media (max-width:600px){
+  .side{display:none}
+  .tabs{display:flex}
+  .swipe-hint{display:block}
+  .q-acts .ok,.q-acts .no{display:none} /* swipe replaces approve/spam buttons */
+  .stats{grid-template-columns:1fr 1fr}
+  .modal-acts{flex-direction:column}
+  .modal-acts .btn{width:100%}
+}
+/* Mobile-S ≤480: maximum compactness */
+@media (max-width:480px){
+  body{font-size:15px}
+  .stats{gap:.5rem}
+  .stat{padding:.7rem .8rem}
+  .stat .n{font-size:1.25rem}
+  .main{padding:.8rem .8rem 5.5rem}
+  .q-acts{flex-direction:column}
+  .q-acts .btn{width:100%}
+  .tri{flex-wrap:wrap}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH ================= -->
+<div class="auth" id="authScreen">
+  <div class="auth-card">
+    <div class="logo">i<span>Komment</span></div>
+    <div class="auth-sub" id="authSub">Sign in to your dashboard</div>
+    <div id="signupFields" style="display:none">
+      <div class="field"><label>Site name</label><input id="fSiteName" placeholder="My Travel Blog"></div>
+      <div class="field"><label>Site domain</label><input id="fDomain" placeholder="mytravelblog.com"></div>
+    </div>
+    <div class="field"><label>Email</label><input id="fEmail" type="email" autocomplete="email"></div>
+    <div class="field"><label>Password</label><input id="fPass" type="password" autocomplete="current-password"></div>
+    <div class="err" id="authErr"></div>
+    <button class="btn full" id="authBtn">Sign in</button>
+    <div class="auth-flip">
+      <span id="flipText">New to iKomment?</span>
+      <a href="#" id="flipLink">Create your site</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div class="app" id="app">
+  <aside class="side">
+    <div class="logo">i<span class="full-word">Komment</span><span style="display:none">K</span></div>
+    <nav class="nav" id="sideNav"></nav>
+    <div class="side-foot" id="sideFoot"></div>
+  </aside>
+  <main class="main" id="main"></main>
+</div>
+
+<nav class="tabs" id="tabBar"></nav>
+
+<!-- type-to-confirm modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h4 id="mTitle">Confirm change</h4>
+    <p id="mDesc"></p>
+    <p>Type <span class="phrase" id="mPhrase"></span> to confirm:</p>
+    <input id="mInput" autocomplete="off" autocapitalize="off">
+    <div class="modal-acts">
+      <button class="btn ghost" id="mCancel">Cancel</button>
+      <button class="btn" id="mOk" disabled>Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* =====================================================
+   iKomment Dashboard — vanilla JS, no dependencies
+   ===================================================== */
+
+var API = (location.hostname === "localhost") ? "http://localhost:8787" : "https://api.ikomment.com";
+var S = { site:null, key:null, settings:{}, view:"home" };
+
+/* ---------- storage (graceful when blocked) ---------- */
+var mem = {};
+function save(k,v){ try{localStorage.setItem(k,v);}catch(e){mem[k]=v;} }
+function load(k){ try{return localStorage.getItem(k)||mem[k];}catch(e){return mem[k];} }
+function wipe(k){ try{localStorage.removeItem(k);}catch(e){delete mem[k];} }
+
+/* ---------- DEMO MODE ----------
+   The dashboard runs with simulated data everywhere EXCEPT the real
+   production domain — so previews, downloads, and phone testing all
+   just work. On dashboard.ikomment.com it becomes the real thing. */
+var REAL_HOSTS = ["dashboard.ikomment.com", "ikomment.com", "localhost"];
+var DEMO = REAL_HOSTS.indexOf(location.hostname) === -1 || location.hash === "#demo";
+var demoDB = null;
+function demoData(){
+  var t = Math.floor(Date.now()/1000);
+  return {
+    site:{id:"demo",name:"Demo Travel Blog",domain:"demoblog.com",plan:"self",owner_email:"you@example.com"},
+    key:"ik_admin_demo",
+    settings:{module_comments:1,module_qa:1,module_forums:1,module_chat:1,voting:1,edit_own:1,
+      edit_window_minutes:15,delete_own:1,markdown:1,formatting_toolbar:0,sorting:1,pinned_comments:1,
+      flagging:1,count_badge:1,guest_posting:0,guest_recognition:1,login_magic_link:0,email_provider:"resend",login_google:1,login_github:1,
+      login_sso:0,sso_secret:null,ai_spam:1,pre_moderation:1,email_moderation:0,word_filter:1,
+      trust_levels:1,theme_mode:"auto",accent_color:"#4f7cff",font:"inherit",corner_radius:8,
+      lazy_loading:1,reply_notifications:1,live_updates:1},
+    pending:[
+      {id:"q1",display_name:"NewVisitor22",trust_level:0,kind:"guest",created_at:t-1800,
+       body_html:"Great article! Check out my site for <b>amazing deals</b> hxxp://spam.example"},
+      {id:"q2",display_name:"Priya",trust_level:1,kind:"google",created_at:t-3600,
+       body_html:"This matches my experience travelling through Kerala last year — the section on monsoon timing is spot on."},
+      {id:"q3",display_name:"Tom B",trust_level:0,kind:"github",created_at:t-7200,
+       body_html:"Small correction: the fort was built in 1672, not 1762."}
+    ],
+    words:[{word:"casino",action:"block"},{word:"crypto",action:"hold"}],
+    categories:[
+      {id:"c1",name:"General",description:"Anything goes",position:1,chat_enabled:1},
+      {id:"c2",name:"Support",description:"Questions and help",position:2,chat_enabled:0}
+    ],
+    pages:[
+      {id:"pg1",url:"https://demoblog.com/kerala-guide",title:"Kerala Travel Guide",override_comments:null,override_qa:null,override_voting:null,override_guest_posting:null,override_pre_moderation:null},
+      {id:"pg2",url:"https://demoblog.com/about",title:"About",override_comments:0,override_qa:null,override_voting:null,override_guest_posting:null,override_pre_moderation:null}
+    ],
+    overview:{pending:3,posts_today:12,total_users:148,pageviews_month:21450,plan:"self",
+      recent:[{display_name:"Priya",body_html:"This matches my experience…",status:"pending",created_at:t-3600},
+              {display_name:"Maya",body_html:"Beautifully written.",status:"approved",created_at:t-9000}]}
+  };
+}
+
+/* ---------- API wrapper ---------- */
+function call(method, path, body, qs){
+  if (DEMO) return demoCall(method, path, body, qs);
+  var url = API + "/api/" + path + (qs ? "?" + new URLSearchParams(Object.assign({site:S.site?S.site.id:""}, qs)) : "");
+  return fetch(url, {
+    method: method,
+    headers: {"content-type":"application/json","x-ikomment-admin": S.key||""},
+    body: body ? JSON.stringify(Object.assign({site:S.site?S.site.id:""}, body)) : undefined
+  }).then(function(r){ return r.json(); });
+}
+function demoCall(method, path, body){
+  if(!demoDB) demoDB = demoData();
+  return new Promise(function(res){ setTimeout(function(){
+    if(path==="admin/login"||path==="admin/signup")
+      res({ok:true,site_id:"demo",admin_key:demoDB.key,site:demoDB.site,settings:demoDB.settings});
+    else if(path==="admin/overview") res(demoDB.overview);
+    else if(path==="admin/queue") res({pending:demoDB.pending,flagged:[]});
+    else if(path==="admin/action"){
+      demoDB.pending = demoDB.pending.filter(function(p){return p.id!==body.post_id;});
+      demoDB.overview.pending = demoDB.pending.length;
+      res({ok:true});
+    }
+    else if(path==="admin/settings"&&method==="GET") res({settings:demoDB.settings});
+    else if(path==="admin/settings"){ Object.assign(demoDB.settings, body.changes); res({ok:true}); }
+    else if(path==="admin/pages"&&method==="GET") res({pages:demoDB.pages});
+    else if(path==="admin/pages"){ 
+      var pg=demoDB.pages.find(function(p){return p.id===body.page_id;});
+      if(pg) Object.assign(pg, body.overrides); res({ok:true});
+    }
+    else if(path==="admin/words"&&method==="POST"){
+      if(body.op==="add") demoDB.words.push({word:body.word,action:body.action||"hold"});
+      else demoDB.words=demoDB.words.filter(function(w){return w.word!==body.word;});
+      res({ok:true});
+    }
+    else if(path==="admin/categories"&&method==="GET") res({categories:demoDB.categories});
+    else if(path==="admin/categories"){
+      if(body.op==="add"){var nid="c"+Math.floor(Math.random()*9999);demoDB.categories.push({id:nid,name:body.name,description:body.description||"",chat_enabled:body.chat_enabled===0?0:1});res({ok:true,id:nid});}
+      else if(body.op==="remove"){demoDB.categories=demoDB.categories.filter(function(c){return c.id!==body.id;});res({ok:true});}
+      else{var cc=demoDB.categories.find(function(x){return x.id===body.id;});if(cc){if(body.name)cc.name=body.name;if(body.chat_enabled!=null)cc.chat_enabled=body.chat_enabled;}res({ok:true});}
+    }
+    else if(path==="admin/import"){
+      var mp={}; (body.items||[]).forEach(function(it){ if(it.ext_id) mp[it.ext_id]="new_"+it.ext_id; });
+      res({ok:true,imported:(body.items||[]).length,skipped:0,map:mp});
+    }
+    else if(path==="admin/sso-secret"){ demoDB.settings.sso_secret="ik_sso_demo_secret_key"; res({ok:true,sso_secret:demoDB.settings.sso_secret}); }
+    else if(path==="admin/regen-key"){ res({ok:true,admin_key:"ik_admin_regenerated_demo"}); }
+    else res({words:demoDB.words});
+  }, 150); });
+}
+
+/* ---------- helpers ---------- */
+function $(id){ return document.getElementById(id); }
+function el(tag, cls, text){ var n=document.createElement(tag); if(cls)n.className=cls; if(text!=null)n.textContent=text; return n; }
+function ago(ts){ var s=Math.floor(Date.now()/1000-ts);
+  if(s<60)return"just now"; if(s<3600)return Math.floor(s/60)+"m ago";
+  if(s<86400)return Math.floor(s/3600)+"h ago"; return Math.floor(s/86400)+"d ago"; }
+function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(t._h); t._h=setTimeout(function(){t.classList.remove("on");},2200); }
+
+/* ---------- type-to-confirm system ----------
+   Friction applies ONLY when enabling consequential settings.
+   Reverting is always one normal tap. */
+var CONFIRM_PHRASES = {
+  guest_posting: { phrase:"enable guest posting",
+    desc:"Anyone will be able to comment without an account. This can increase spam — AI moderation and pre-moderation will still apply." },
+  formatting_toolbar: { phrase:"enable formatting toolbar",
+    desc:"Formatting buttons (bold, italic, code, link) will appear in the comment box on your site." },
+  login_magic_link: { phrase:"enable email login",
+    desc:"Sign-in links will be emailed to your readers. Make sure email sending is configured first, or the button will fail for them." },
+  email_moderation: { phrase:"enable email moderation",
+    desc:"Action links in moderation emails can approve or delete comments WITHOUT a dashboard login. Anyone with access to your inbox gains that power." },
+  ai_spam_off: { phrase:"disable ai spam detection",
+    desc:"New comments will no longer be checked for spam automatically. Your moderation queue may grow quickly." },
+  pre_moderation_off: { phrase:"disable pre-moderation",
+    desc:"New comments from unproven users will publish instantly without review." },
+  regen_key: { phrase:"regenerate admin key",
+    desc:"Your current admin key stops working immediately, everywhere it is used." },
+  regen_sso: { phrase:"regenerate sso secret",
+    desc:"Your site's existing SSO integration will stop working until you update the secret on your server." }
+};
+function typeToConfirm(which, onConfirm){
+  var c = CONFIRM_PHRASES[which];
+  $("mTitle").textContent = "Are you sure?";
+  $("mDesc").textContent = c.desc;
+  $("mPhrase").textContent = c.phrase;
+  var input = $("mInput"); input.value = "";
+  var ok = $("mOk"); ok.disabled = true;
+  input.oninput = function(){ ok.disabled = input.value.trim().toLowerCase() !== c.phrase; };
+  ok.onclick = function(){ $("modalBg").classList.remove("on"); onConfirm(); };
+  $("mCancel").onclick = function(){ $("modalBg").classList.remove("on"); };
+  $("modalBg").classList.add("on");
+  setTimeout(function(){ input.focus(); }, 50);
+}
+
+/* ---------- settings update ---------- */
+function setSetting(key, value, cb){
+  var changes = {}; changes[key] = value;
+  call("POST","admin/settings",{changes:changes}).then(function(r){
+    if(r.error){ toast(r.error); return; }
+    S.settings[key] = value;
+    toast("Saved — live on your site in seconds");
+    if(cb) cb();
+  });
+}
+
+/* =====================================================
+   VIEWS
+   ===================================================== */
+var VIEWS = [
+  {id:"home",    ico:"🏠", label:"Home"},
+  {id:"queue",   ico:"🛡️", label:"Moderate"},
+  {id:"features",ico:"🎛️", label:"Features"},
+  {id:"pages",   ico:"📄", label:"Pages"},
+  {id:"categories",ico:"🗂️", label:"Categories"},
+  {id:"style",   ico:"🎨", label:"Style"},
+  {id:"identity",ico:"🔐", label:"Identity"},
+  {id:"imports", ico:"📥", label:"Import"},
+  {id:"settings",ico:"⚙️", label:"Settings"}
+];
+var MOBILE_TABS = ["home","queue","features","more"];
+
+
+/* ---------- breadcrumbs (admin-only, plain buttons, no SEO markup) ---------- */
+var CRUMB_LABEL = {home:"Home",queue:"Moderation",features:"Features",pages:"Pages",
+  categories:"Forum categories",style:"Appearance",identity:"Identity & SSO",
+  settings:"Settings",imports:"Import from Disqus",more:"More"};
+var MORE_CHILDREN = ["pages","categories","style","identity","imports","settings"];
+function renderCrumbs(view){
+  var m = $("main");
+  var bar = el("div","crumbs");
+  function seg(label, target){
+    var b = el("button",null,label);
+    b.onclick = function(){ nav(target); };
+    return b;
+  }
+  var trail = [];
+  if(view !== "home") trail.push(seg("Dashboard","home"));
+  if(MORE_CHILDREN.indexOf(view) >= 0) trail.push(seg("More","more"));
+  if(!trail.length) return; // Home gets no trail
+  trail.forEach(function(t,i){
+    bar.appendChild(t);
+    bar.appendChild(el("span","sep","/"));
+  });
+  bar.appendChild(el("span","here",CRUMB_LABEL[view]||view));
+  m.insertBefore(bar, m.firstChild);
+}
+
+function nav(view){
+  S.view = view;
+  document.querySelectorAll(".nav button").forEach(function(b){ b.classList.toggle("on", b.dataset.v===view); });
+  document.querySelectorAll(".tabs button").forEach(function(b){
+    b.classList.toggle("on", b.dataset.v===view || (b.dataset.v==="more" && ["pages","style","identity","settings","more"].indexOf(view)>=0));
+  });
+  render[view]();
+  renderCrumbs(view);
+}
+
+var render = {};
+
+/* ---------- HOME ---------- */
+render.home = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Overview — " + S.site.name));
+  call("GET","admin/overview",null,{}).then(function(d){
+    if(d.error){ toast(d.error); return; }
+    var stats = el("div","stats");
+    [[d.pending,"Awaiting approval"],[d.posts_today,"Comments today"],
+     [d.total_users,"Total users"],
+     [S.site.plan==="cloud" ? (d.pageviews_month/1000).toFixed(0)+"k / 500k" : "Self-hosted","Pageviews this month"]]
+    .forEach(function(x){
+      var s = el("div","stat");
+      s.appendChild(el("div","n",String(x[0])));
+      s.appendChild(el("div","l",x[1]));
+      stats.appendChild(s);
+    });
+    m.appendChild(stats);
+    if(d.pending > 0){
+      var a = el("div","attn");
+      a.innerHTML = "⚠️ <span><b>"+d.pending+" comment"+(d.pending>1?"s":"")+"</b> awaiting your approval</span>";
+      a.onclick = function(){ nav("queue"); };
+      m.appendChild(a);
+    }
+    m.appendChild(el("h3",null,"Recent activity"));
+    if(!d.recent.length) m.appendChild(el("div","empty","No comments yet. Once your widget is live, activity appears here."));
+    d.recent.forEach(function(r){
+      var c = el("div","card");
+      var meta = el("div","q-meta");
+      meta.appendChild(el("span","q-who",r.display_name));
+      meta.appendChild(el("span","muted",ago(r.created_at)));
+      if(r.status==="pending") meta.appendChild(el("span","p-badge","pending"));
+      c.appendChild(meta);
+      var b = el("div","q-body"); b.innerHTML = r.body_html; c.appendChild(b);
+      m.appendChild(c);
+    });
+  });
+};
+
+/* ---------- MODERATION QUEUE ---------- */
+render.queue = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Moderation"));
+  m.appendChild(el("div","swipe-hint","Swipe right to approve · swipe left to mark spam"));
+  var list = el("div"); m.appendChild(list);
+
+  call("GET","admin/queue",null,{}).then(function(d){
+    if(d.error){ toast(d.error); return; }
+    if(!d.pending.length){ list.appendChild(el("div","empty","Queue is clear. Nothing needs your attention. 🎉")); return; }
+    d.pending.forEach(function(p){ list.appendChild(queueItem(p)); });
+  });
+
+  function act(p, node, action){
+    node.style.opacity = "0";
+    node.style.transform = "translateX(" + (action==="approve" ? "60px" : "-60px") + ")";
+    setTimeout(function(){ node.remove();
+      if(!list.children.length) list.appendChild(el("div","empty","Queue is clear. Nothing needs your attention. 🎉"));
+    }, 200);
+    call("POST","admin/action",{action:action,post_id:p.id}).then(function(r){
+      if(r.error) toast(r.error); else toast(action==="approve" ? "Approved ✓" : "Marked as spam ✗");
+    });
+  }
+
+  function queueItem(p){
+    var c = el("div","q-item");
+    var meta = el("div","q-meta");
+    meta.appendChild(el("span","q-who",p.display_name));
+    meta.appendChild(el("span","q-trust","trust "+p.trust_level+" · "+(p.kind||"guest")));
+    meta.appendChild(el("span","muted",ago(p.created_at)));
+    c.appendChild(meta);
+    var b = el("div","q-body"); b.innerHTML = p.body_html; c.appendChild(b);
+    var acts = el("div","q-acts");
+    var ok = el("button","btn ok","✓ Approve"); ok.onclick = function(){ act(p,c,"approve"); };
+    var no = el("button","btn no","✗ Spam");    no.onclick = function(){ act(p,c,"spam"); };
+    var ban = el("button","btn ghost","Shadow ban");
+    ban.onclick = function(){ call("POST","admin/action",{action:"shadow_ban",user_id:p.author_id||p.id}).then(function(){toast("User shadow banned");}); };
+    var nuke = el("button","btn ghost","☢ Nuke user");
+    nuke.onclick = function(){
+      if(confirm("Delete EVERYTHING this user has ever posted on your site, and shadow ban them? This cannot be undone.")){
+        call("POST","admin/action",{action:"nuke",user_id:p.author_id||p.id}).then(function(){ toast("User nuked"); nav("queue"); });
+      }
+    };
+    acts.appendChild(ok); acts.appendChild(no); acts.appendChild(ban); acts.appendChild(nuke);
+    c.appendChild(acts);
+
+    /* swipe gestures (mobile) */
+    var x0=null;
+    c.addEventListener("touchstart",function(e){ x0=e.touches[0].clientX; },{passive:true});
+    c.addEventListener("touchmove",function(e){
+      if(x0===null) return;
+      var dx = e.touches[0].clientX - x0;
+      c.style.transform = "translateX:"+0; c.style.transform = "translateX("+dx+"px)";
+      c.style.opacity = String(Math.max(.4, 1 - Math.abs(dx)/300));
+    },{passive:true});
+    c.addEventListener("touchend",function(e){
+      var dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if(dx > 90) act(p,c,"approve");
+      else if(dx < -90) act(p,c,"spam");
+      else { c.style.transform = ""; c.style.opacity = ""; }
+    });
+    return c;
+  }
+};
+
+/* ---------- FEATURE CONTROL PANEL ---------- */
+render.features = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Feature Control Panel"));
+  m.appendChild(el("div","muted","Changes go live on your website within seconds."));
+
+  var GROUPS = [
+    ["Modules",[
+      ["module_comments","Comments","Comment sections on your pages"],
+      ["module_qa","Q&A","Question & answer format with accepted answers"],
+      ["module_forums","Forums","Community boards with threads"],
+      ["module_chat","Live chat","Real-time chat rooms inside forum categories"]]],
+    ["Comment features",[
+      ["voting","Up/down votes","Readers can vote comments up or down"],
+      ["edit_own","Edit own comments","Authors can edit within the time window","minutes"],
+      ["delete_own","Delete own comments","Authors can remove their own comments"],
+      ["markdown","Markdown","**bold**, *italic*, `code` and links render nicely"],
+      ["formatting_toolbar","Formatting toolbar","B / i / code / link buttons in the comment box","lock"],
+      ["sorting","Sorting","Top · Newest · Oldest dropdown for readers"],
+      ["pinned_comments","Pinned comments","You can pin one comment to the top"],
+      ["flagging","Report button","Readers can flag comments for your review"],
+      ["count_badge","Comment count badge","Comment counts for your article listings"]]],
+    ["Moderation",[
+      ["ai_spam","AI spam detection","Every comment checked privately on our infrastructure — never shared with third-party AI services","lock-off"],
+      ["pre_moderation","Pre-moderation","New users' comments wait for approval; trusted users skip the queue","lock-off"],
+      ["email_moderation","Email moderation","Approve or reject from your inbox without logging in","lock"],
+      ["word_filter","Word filter","Hold or block comments containing your banned words"],
+      ["trust_levels","Trust levels","Well-behaved users earn auto-approval over time"]]],
+    ["Display & misc",[
+      ["lazy_loading","Lazy loading","Widget loads only when readers scroll near it"],
+      ["live_updates","Live updates","New comments appear without page refresh"],
+      ["reply_notifications","Reply notifications","Commenters get emailed when someone replies"]]]
+  ];
+
+  GROUPS.forEach(function(g){
+    m.appendChild(el("h3",null,g[0]));
+    var card = el("div","card");
+    g[1].forEach(function(f){ card.appendChild(toggleRow(f[0],f[1],f[2],f[3])); });
+    m.appendChild(card);
+  });
+
+  function toggleRow(key,title,desc,extra){
+    var row = el("div","trow");
+    var ti = el("div","ti");
+    var tt = el("div","tt",title);
+    ti.appendChild(tt);
+    ti.appendChild(el("div","td",desc));
+    if(extra==="minutes"){
+      var inp = el("input","mini-input"); inp.type="number"; inp.min=1; inp.max=1440;
+      inp.value = S.settings.edit_window_minutes || 15;
+      inp.onchange = function(){ setSetting("edit_window_minutes", parseInt(inp.value)||15); };
+      var wrap = el("div","td"); wrap.appendChild(document.createTextNode("Edit window (minutes): "));
+      wrap.appendChild(inp); ti.appendChild(wrap);
+    }
+    row.appendChild(ti);
+    var sw = el("div","sw"+(S.settings[key]?" on":""));
+    sw.setAttribute("role","switch");
+    sw.onclick = function(){
+      var turningOn = !S.settings[key];
+      var flip = function(){ setSetting(key, turningOn?1:0, function(){ sw.classList.toggle("on", !!S.settings[key]); }); };
+      /* friction only on the risky direction */
+      if(turningOn && CONFIRM_PHRASES[key] && extra==="lock") typeToConfirm(key, flip);
+      else if(!turningOn && extra==="lock-off" && CONFIRM_PHRASES[key+"_off"]) typeToConfirm(key+"_off", flip);
+      else flip();
+    };
+    row.appendChild(sw);
+    return row;
+  }
+};
+
+/* ---------- PAGES ---------- */
+render.pages = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Pages"));
+  m.appendChild(el("div","muted","Every page where iKomment is active. Tap a page to set overrides — overrides win over your site-wide settings."));
+  var search = el("input","search"); search.placeholder = "Search pages…";
+  m.appendChild(search);
+  var list = el("div"); m.appendChild(list);
+
+  function fetchPages(){
+    call("GET","admin/pages",null,{q:search.value||""}).then(function(d){
+      list.textContent = "";
+      if(d.error){ toast(d.error); return; }
+      if(!d.pages.length){ list.appendChild(el("div","empty","No pages yet — pages appear automatically the first time the widget loads on them.")); return; }
+      d.pages.forEach(function(p){ list.appendChild(pageItem(p)); });
+    });
+  }
+  var t; search.oninput = function(){ clearTimeout(t); t = setTimeout(fetchPages, 300); };
+  fetchPages();
+
+  var OVERRIDES = [["override_comments","Comments"],["override_qa","Q&A"],
+                   ["override_voting","Voting"],["override_guest_posting","Guest posting"],
+                   ["override_pre_moderation","Pre-moderation"]];
+
+  function pageItem(p){
+    var c = el("div","p-item");
+    var title = el("div","p-title", p.title || "(untitled page)");
+    var hasOv = OVERRIDES.some(function(o){ return p[o[0]] !== null && p[o[0]] !== undefined; });
+    if(hasOv) title.appendChild(el("span","p-badge","has overrides"));
+    c.appendChild(title);
+    c.appendChild(el("div","p-url",p.url));
+    var ov = el("div","p-overrides");
+    OVERRIDES.forEach(function(o){
+      var row = el("div","trow");
+      var ti = el("div","ti"); ti.appendChild(el("div","tt",o[1]));
+      row.appendChild(ti);
+      var tri = el("div","tri");
+      [["Default",null],["On",1],["Off",0]].forEach(function(opt){
+        var b = el("button",(p[o[0]]===opt[1] || (opt[1]===null && (p[o[0]]===null||p[o[0]]===undefined)))?"on":"",opt[0]);
+        b.onclick = function(ev){
+          ev.stopPropagation();
+          var ovr = {}; ovr[o[0]] = opt[1];
+          call("POST","admin/pages",{page_id:p.id,overrides:ovr}).then(function(r){
+            if(r.error){ toast(r.error); return; }
+            p[o[0]] = opt[1];
+            tri.querySelectorAll("button").forEach(function(x){x.classList.remove("on");});
+            b.classList.add("on");
+            toast("Override saved");
+          });
+        };
+        tri.appendChild(b);
+      });
+      row.appendChild(tri);
+      ov.appendChild(row);
+    });
+    c.appendChild(ov);
+    c.onclick = function(e){ if(e.target.tagName!=="BUTTON") c.classList.toggle("open"); };
+    return c;
+  }
+};
+
+/* ---------- STYLE / APPEARANCE ---------- */
+render.style = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Appearance"));
+  var grid = el("div","style-grid");
+  var controls = el("div");
+  var prevCard = el("div");
+  prevCard.appendChild(el("h3",null,"Live preview"));
+  var preview = el("div","preview");
+  prevCard.appendChild(preview);
+  grid.appendChild(controls); grid.appendChild(prevCard);
+  m.appendChild(grid);
+
+  function paintPreview(){
+    var s = S.settings;
+    var dark = s.theme_mode !== "light";
+    preview.style.background = dark ? "#16181d" : "#ffffff";
+    preview.innerHTML =
+      "<div style='font-family:"+(s.font==="inherit"?"inherit":s.font)+";color:"+(dark?"#e7e9ee":"#1a1d23")+"'>" +
+      "<div style='border:1px solid "+(dark?"#333947":"#ddd")+";border-radius:"+s.corner_radius+"px;padding:.6rem .8rem;color:"+(dark?"#9aa1ad":"#888")+";font-size:.9rem'>Join the discussion…</div>" +
+      "<div style='display:flex;gap:.5rem;margin-top:1rem'>" +
+      "<div style='width:30px;height:30px;border-radius:50%;background:"+s.accent_color+";color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700'>M</div>" +
+      "<div><div style='font-size:.82rem'><b>Maya</b> <span style='color:"+(dark?"#9aa1ad":"#888")+"'>2h ago</span></div>" +
+      "<div style='font-size:.9rem;margin:.15rem 0'>This is how comments will look on your site.</div>" +
+      "<div style='font-size:.8rem;color:"+s.accent_color+"'>▲ 12 &nbsp;▼ &nbsp;Reply</div></div></div></div>";
+  }
+
+  controls.appendChild(el("h3",null,"Accent colour"));
+  var colors = el("div","color-row");
+  ["#4f7cff","#3ecf8e","#ff5d7a","#ffb84d","#9b6bff","#1ec8c8"].forEach(function(c){
+    var d = el("button","color-dot"+(S.settings.accent_color===c?" on":""));
+    d.style.background = c;
+    d.onclick = function(){ setSetting("accent_color",c,function(){ render.style(); }); };
+    colors.appendChild(d);
+  });
+  var custom = document.createElement("input"); custom.type = "color";
+  custom.value = S.settings.accent_color || "#4f7cff";
+  custom.onchange = function(){ setSetting("accent_color",custom.value,function(){ render.style(); }); };
+  colors.appendChild(custom);
+  controls.appendChild(colors);
+
+  controls.appendChild(el("h3",null,"Theme mode"));
+  var seg = el("div","seg");
+  [["auto","Auto-detect"],["dark","Always dark"],["light","Always light"]].forEach(function(o){
+    var b = el("button",S.settings.theme_mode===o[0]?"on":"",o[1]);
+    b.onclick = function(){ setSetting("theme_mode",o[0],function(){ render.style(); }); };
+    seg.appendChild(b);
+  });
+  controls.appendChild(seg);
+
+  controls.appendChild(el("h3",null,"Corner roundness"));
+  var range = document.createElement("input"); range.type = "range"; range.min = 0; range.max = 20;
+  range.value = S.settings.corner_radius || 8;
+  range.oninput = function(){ S.settings.corner_radius = parseInt(range.value); paintPreview(); };
+  range.onchange = function(){ setSetting("corner_radius", parseInt(range.value)); };
+  controls.appendChild(range);
+
+  controls.appendChild(el("h3",null,"Font"));
+  var fseg = el("div","seg");
+  [["inherit","Match my site"],["system-ui","System font"]].forEach(function(o){
+    var b = el("button",S.settings.font===o[0]?"on":"",o[1]);
+    b.onclick = function(){ setSetting("font",o[0],function(){ render.style(); }); };
+    fseg.appendChild(b);
+  });
+  controls.appendChild(fseg);
+
+  paintPreview();
+};
+
+/* ---------- IDENTITY & SSO ---------- */
+render.identity = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Identity & sign-in"));
+
+  m.appendChild(el("h3",null,"How readers can comment"));
+  var card = el("div","card");
+  [["guest_posting","Guest posting","Comment with just a name — no account needed.","lock"],
+   ["login_magic_link","Email login (magic link)","One-tap sign-in link sent by email. Requires email sending to be configured.","lock"],
+   ["guest_recognition","Returning guest memory","Returning guests are recognised — no retyping their name"],
+   ["login_google","Google sign-in","Requires your Google OAuth keys (see setup notes)"],
+   ["login_github","GitHub sign-in","Requires your GitHub OAuth keys (see setup notes)"],
+   ["login_sso","SSO — your own users","Your site's logged-in users comment seamlessly"]]
+  .forEach(function(f){
+    var row = el("div","trow");
+    var ti = el("div","ti");
+    var tt = el("div","tt",f[1]);
+    ti.appendChild(tt); ti.appendChild(el("div","td",f[2]));
+    row.appendChild(ti);
+    var sw = el("div","sw"+(S.settings[f[0]]?" on":""));
+    sw.onclick = function(){
+      var on = !S.settings[f[0]];
+      var flip = function(){ setSetting(f[0],on?1:0,function(){ sw.classList.toggle("on",!!S.settings[f[0]]); if(f[0]==="login_sso"||f[0]==="login_magic_link") render.identity(); }); };
+      if(on && f[3]==="lock") typeToConfirm(f[0],flip); else flip();
+    };
+    row.appendChild(sw);
+    card.appendChild(row);
+  });
+  m.appendChild(card);
+
+
+  if(S.settings.login_magic_link){
+    m.appendChild(el("h3",null,"Email provider"));
+    var pc = el("div","card");
+    pc.appendChild(el("div","muted","Which service sends your sign-in links and moderation emails. The API key itself is set during deployment and is never stored here."));
+    var pseg = el("div","seg"); pseg.style.marginTop = ".7rem";
+    [["resend","Resend"],["sendgrid","SendGrid"]].forEach(function(o){
+      var b = el("button",(S.settings.email_provider||"resend")===o[0]?"on":"",o[1]);
+      b.onclick = function(){ setSetting("email_provider",o[0],function(){ render.identity(); }); };
+      pseg.appendChild(b);
+    });
+    pc.appendChild(pseg);
+    m.appendChild(pc);
+  }
+
+  if(S.settings.login_sso){
+    m.appendChild(el("h3",null,"SSO secret key"));
+    var sc = el("div","card");
+    if(S.settings.sso_secret){
+      sc.appendChild(el("div","muted","Use this key on your server to sign user tokens. Keep it secret."));
+      var code = el("div","code",S.settings.sso_secret); sc.appendChild(code);
+      var regen = el("button","btn ghost","Regenerate secret"); regen.style.marginTop = ".7rem";
+      regen.onclick = function(){ typeToConfirm("regen_sso", function(){
+        call("POST","admin/sso-secret",{}).then(function(r){
+          if(r.error){ toast(r.error); return; }
+          S.settings.sso_secret = r.sso_secret; render.identity(); toast("New SSO secret generated");
+        });
+      }); };
+      sc.appendChild(regen);
+    } else {
+      var gen = el("button","btn","Generate SSO secret");
+      gen.onclick = function(){ call("POST","admin/sso-secret",{}).then(function(r){
+        S.settings.sso_secret = r.sso_secret; render.identity(); toast("SSO secret generated");
+      }); };
+      sc.appendChild(gen);
+    }
+    m.appendChild(sc);
+  }
+};
+
+/* ---------- SETTINGS ---------- */
+render.settings = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Settings"));
+
+  m.appendChild(el("h3",null,"Your site"));
+  var sc = el("div","card");
+  sc.appendChild(el("div","tt",S.site.name));
+  sc.appendChild(el("div","muted",S.site.domain + " · " + (S.site.plan==="cloud"?"iKomment Cloud — $15/mo":"Self-hosted — Free")));
+  m.appendChild(sc);
+
+  m.appendChild(el("h3",null,"Embed code"));
+  var ec = el("div","card");
+  ec.appendChild(el("div","muted","Paste this where you want comments to appear:"));
+  var code = el("div","code",'<div id="ikomment" data-module="comments"></div>\n<script src="https://cdn.ikomment.com/i.js" data-site="'+S.site.id+'" async><\/script>');
+  ec.appendChild(code);
+  m.appendChild(ec);
+
+  m.appendChild(el("h3",null,"Word filter"));
+  var wc = el("div","card");
+  var wlist = el("div"); wc.appendChild(wlist);
+  function loadWords(){
+    call("GET","admin/words",null,{}).then(function(d){
+      wlist.textContent = "";
+      (d.words||[]).forEach(function(w){
+        var row = el("div","trow");
+        var ti = el("div","ti");
+        ti.appendChild(el("div","tt",w.word));
+        ti.appendChild(el("div","td",w.action==="block"?"Blocked outright":"Held for review"));
+        row.appendChild(ti);
+        var rm = el("button","btn ghost","Remove");
+        rm.onclick = function(){ call("POST","admin/words",{op:"remove",word:w.word}).then(loadWords); };
+        row.appendChild(rm);
+        wlist.appendChild(row);
+      });
+      if(!(d.words||[]).length) wlist.appendChild(el("div","muted","No banned words yet."));
+    });
+  }
+  loadWords();
+  var addRow = el("div","q-acts"); addRow.style.marginTop = ".8rem";
+  var wIn = el("input","mini-input"); wIn.style.width = "140px"; wIn.placeholder = "word or phrase";
+  var wSel = document.createElement("select"); wSel.className = "mini-input"; wSel.style.width = "auto";
+  ["hold","block"].forEach(function(o){ var op = el("option",null,o==="hold"?"Hold for review":"Block outright"); op.value = o; wSel.appendChild(op); });
+  var wAdd = el("button","btn","Add");
+  wAdd.onclick = function(){
+    if(!wIn.value.trim()) return;
+    call("POST","admin/words",{op:"add",word:wIn.value.trim(),action:wSel.value}).then(function(){ wIn.value = ""; loadWords(); });
+  };
+  addRow.appendChild(wIn); addRow.appendChild(wSel); addRow.appendChild(wAdd);
+  wc.appendChild(addRow);
+  m.appendChild(wc);
+
+  m.appendChild(el("h3",null,"Admin key"));
+  var kc = el("div","card");
+  kc.appendChild(el("div","muted","Your dashboard uses this key behind the scenes. Regenerate it if you ever suspect it leaked."));
+  var regen = el("button","btn danger","Regenerate admin key"); regen.style.marginTop = ".7rem";
+  regen.onclick = function(){ typeToConfirm("regen_key", function(){
+    call("POST","admin/regen-key",{}).then(function(r){
+      if(r.error){ toast(r.error); return; }
+      S.key = r.admin_key; save("ik_dash_key", r.admin_key);
+      toast("Admin key regenerated");
+    });
+  }); };
+  kc.appendChild(regen);
+  m.appendChild(kc);
+
+  var out = el("button","btn ghost","Sign out"); out.style.marginTop = "1.2rem";
+  out.onclick = function(){ wipe("ik_dash_key"); wipe("ik_dash_site"); location.reload(); };
+  m.appendChild(out);
+};
+
+/* ---------- FORUM CATEGORIES ---------- */
+render.categories = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Forum categories"));
+  m.appendChild(el("div","muted","The boards your community posts in. Each can have its own live chat room."));
+  var list = el("div"); list.style.marginTop = ".9rem"; m.appendChild(list);
+
+  function loadCats(){
+    call("GET","admin/categories",null,{}).then(function(d){
+      list.textContent = "";
+      if(d.error){ toast(d.error); return; }
+      if(!(d.categories||[]).length) list.appendChild(el("div","empty","No categories yet — add your first below."));
+      (d.categories||[]).forEach(function(c){
+        var card = el("div","card");
+        var row = el("div","trow"); row.style.borderBottom = "0";
+        var ti = el("div","ti");
+        ti.appendChild(el("div","tt",c.name));
+        ti.appendChild(el("div","td",c.description||""));
+        row.appendChild(ti);
+        var rm = el("button","btn ghost","Delete");
+        rm.onclick = function(){
+          if(confirm('Delete the "'+c.name+'" category? Its threads will no longer be reachable.')){
+            call("POST","admin/categories",{op:"remove",id:c.id}).then(loadCats);
+          }
+        };
+        row.appendChild(rm);
+        card.appendChild(row);
+        var chatRow = el("div","trow"); chatRow.style.borderBottom = "0";
+        var cti = el("div","ti");
+        cti.appendChild(el("div","td","💬 Live chat room for this category"));
+        chatRow.appendChild(cti);
+        var sw = el("div","sw"+(c.chat_enabled?" on":""));
+        sw.onclick = function(){
+          var v = c.chat_enabled ? 0 : 1;
+          call("POST","admin/categories",{op:"update",id:c.id,chat_enabled:v}).then(function(){
+            c.chat_enabled = v; sw.classList.toggle("on",!!v); toast("Saved");
+          });
+        };
+        chatRow.appendChild(sw);
+        card.appendChild(chatRow);
+        list.appendChild(card);
+      });
+    });
+  }
+  loadCats();
+
+  m.appendChild(el("h3",null,"Add category"));
+  var ac = el("div","card");
+  var nIn = el("input","search"); nIn.placeholder = "Category name (e.g. General)"; nIn.style.marginBottom = ".6rem";
+  var dIn = el("input","search"); dIn.placeholder = "Short description (optional)"; dIn.style.marginBottom = ".6rem";
+  var add = el("button","btn","Add category");
+  add.onclick = function(){
+    if(!nIn.value.trim()) return;
+    call("POST","admin/categories",{op:"add",name:nIn.value.trim(),description:dIn.value.trim()}).then(function(r){
+      if(r.error){ toast(r.error); return; }
+      nIn.value = ""; dIn.value = ""; toast("Category added"); loadCats();
+    });
+  };
+  ac.appendChild(nIn); ac.appendChild(dIn); ac.appendChild(add);
+  m.appendChild(ac);
+};
+
+/* ---------- DISQUS IMPORT ---------- */
+render.imports = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"Import from Disqus"));
+  m.appendChild(el("div","muted","Bring your entire comment history across — nesting, names, and timestamps preserved. Request your export at disqus.com → Admin → Community → Export, then upload the file Disqus emails you (.xml or .gz, no need to unzip)."));
+
+  var card = el("div","card"); card.style.marginTop = ".9rem";
+  var pick = el("button","btn","Choose export file");
+  var file = document.createElement("input");
+  file.type = "file"; file.accept = ".xml,.gz,application/xml,application/gzip"; file.style.display = "none";
+  var status = el("div","muted"); status.style.marginTop = ".8rem";
+  var barWrap = el("div"); barWrap.style.cssText = "background:var(--panel2);border-radius:99px;height:10px;margin-top:.6rem;overflow:hidden;display:none";
+  var bar = el("div"); bar.style.cssText = "background:var(--accent);height:100%;width:0%;transition:width .3s";
+  barWrap.appendChild(bar);
+  card.appendChild(pick); card.appendChild(file); card.appendChild(status); card.appendChild(barWrap);
+  m.appendChild(card);
+
+  pick.onclick = function(){ file.click(); };
+
+  file.onchange = function(){
+    var f = file.files[0];
+    if(!f) return;
+    pick.disabled = true;
+    status.textContent = "Reading file…";
+
+    readFileText(f).then(function(xmlText){
+      status.textContent = "Parsing export…";
+      var parsed = parseDisqus(xmlText);
+      if(parsed.error){ status.textContent = "⚠️ " + parsed.error; pick.disabled = false; return; }
+      if(!parsed.items.length){ status.textContent = "No importable comments found in this file."; pick.disabled = false; return; }
+      status.textContent = "Found " + parsed.items.length + " comments across " + parsed.threads + " pages. Importing…";
+      barWrap.style.display = "block";
+      runImport(parsed.items, function(done, total){
+        bar.style.width = Math.round(done/total*100) + "%";
+        status.textContent = "Imported " + done + " of " + total + " comments…";
+      }).then(function(r){
+        bar.style.width = "100%";
+        status.textContent = "✅ Done — " + r.imported + " comments imported" +
+          (r.skipped ? ", " + r.skipped + " skipped (deleted/spam/malformed)" : "") + ".";
+        pick.disabled = false;
+        toast("Disqus import complete");
+      });
+    }).catch(function(e){
+      status.textContent = "⚠️ Could not read that file. If it's a .gz and your browser is older, unzip it first and upload the .xml.";
+      pick.disabled = false;
+    });
+  };
+
+  /* read .xml directly, or decompress .gz in the browser */
+  function readFileText(f){
+    if(/\.gz$/i.test(f.name) && typeof DecompressionStream !== "undefined"){
+      var ds = new DecompressionStream("gzip");
+      return new Response(f.stream().pipeThrough(ds)).text();
+    }
+    return f.text();
+  }
+
+  /* Disqus XML → flat, dependency-ordered item list */
+  function parseDisqus(xmlText){
+    var doc;
+    try { doc = new DOMParser().parseFromString(xmlText, "text/xml"); }
+    catch(e){ return { error: "That file doesn't look like XML." }; }
+    if(doc.querySelector("parsererror")) return { error: "That file doesn't look like a valid Disqus export." };
+
+    var NS = "http://disqus.com/disqus-internals";
+    function dsqId(node){ return node ? (node.getAttributeNS(NS,"id") || node.getAttribute("dsq:id")) : null; }
+
+    /* threads: dsq:id → page url + title */
+    var threadMap = {};
+    var threadNodes = doc.querySelectorAll("disqus > thread");
+    threadNodes.forEach(function(t){
+      var id = dsqId(t);
+      var link = t.querySelector("link");
+      var title = t.querySelector("title");
+      if(id && link && link.textContent) threadMap[id] = {
+        url: link.textContent.trim(),
+        title: title ? title.textContent.trim() : ""
+      };
+    });
+
+    /* posts */
+    var raw = [];
+    doc.querySelectorAll("disqus > post").forEach(function(p){
+      function txt(sel){ var n = p.querySelector(sel); return n ? n.textContent : ""; }
+      var deleted = txt("isDeleted") === "true";
+      var spam = txt("isSpam") === "true";
+      if(deleted || spam) return; // skip junk — counted as skipped client-side? keep simple: omit
+      var tRef = p.querySelector("thread");
+      var pRef = p.querySelector("parent");
+      var thread = threadMap[dsqId(tRef)];
+      if(!thread) return;
+      var createdAt = Math.floor(new Date(txt("createdAt")).getTime()/1000) || 0;
+      raw.push({
+        ext_id: dsqId(p),
+        ext_parent: pRef ? dsqId(pRef) : null,
+        page_url: thread.url,
+        page_title: thread.title,
+        author_name: (txt("author > name") || "Disqus user").slice(0,50),
+        author_email: txt("author > email") || null,
+        body_html: txt("message"),
+        created_at: createdAt
+      });
+    });
+
+    /* order: parents before children (walk levels) */
+    var byId = {}; raw.forEach(function(r){ byId[r.ext_id] = r; });
+    var ordered = [], placed = {};
+    var guard = 0;
+    while(ordered.length < raw.length && guard++ < 50){
+      raw.forEach(function(r){
+        if(placed[r.ext_id]) return;
+        if(!r.ext_parent || placed[r.ext_parent] || !byId[r.ext_parent]){
+          ordered.push(r); placed[r.ext_id] = true;
+        }
+      });
+    }
+    return { items: ordered, threads: Object.keys(threadMap).length };
+  }
+
+  /* send in batches, translating parent ids with the server's mapping */
+  function runImport(items, onProgress){
+    var BATCH = 100;
+    var map = {};   // ext_id → new id (accumulated across batches)
+    var imported = 0, skipped = 0, idx = 0;
+
+    function nextBatch(){
+      if(idx >= items.length) return Promise.resolve({imported:imported, skipped:skipped});
+      var slice = items.slice(idx, idx + BATCH).map(function(it){
+        return {
+          ext_id: it.ext_id,
+          parent_new_id: it.ext_parent ? (map[it.ext_parent] || null) : null,
+          page_url: it.page_url, page_title: it.page_title,
+          author_name: it.author_name, author_email: it.author_email,
+          body_html: it.body_html, created_at: it.created_at
+        };
+      });
+      idx += BATCH;
+      return call("POST","admin/import",{items:slice}).then(function(r){
+        if(r.error){ skipped += slice.length; }
+        else {
+          imported += r.imported; skipped += r.skipped;
+          Object.assign(map, r.map || {});
+        }
+        onProgress(Math.min(idx, items.length), items.length);
+        return nextBatch();
+      });
+    }
+    return nextBatch();
+  }
+};
+
+/* ---------- "More" (mobile only) ---------- */
+render.more = function(){
+  var m = $("main"); m.textContent = "";
+  m.appendChild(el("h2",null,"More"));
+  [["pages","📄 Pages"],["categories","🗂️ Forum categories"],["style","🎨 Appearance"],["identity","🔐 Identity & SSO"],["imports","📥 Import from Disqus"],["settings","⚙️ Settings"]]
+  .forEach(function(v){
+    var c = el("div","card"); c.style.cursor = "pointer";
+    c.appendChild(el("div","tt",v[1]));
+    c.onclick = function(){ nav(v[0]); };
+    m.appendChild(c);
+  });
+};
+
+/* =====================================================
+   BOOT
+   ===================================================== */
+function buildNav(){
+  var side = $("sideNav");
+  VIEWS.forEach(function(v){
+    var b = el("button"); b.dataset.v = v.id;
+    b.innerHTML = "<span class='ico'>"+v.ico+"</span><span class='lbl'>"+v.label+"</span>";
+    b.onclick = function(){ nav(v.id); };
+    side.appendChild(b);
+  });
+  var tabs = $("tabBar");
+  MOBILE_TABS.forEach(function(id){
+    var v = VIEWS.find(function(x){return x.id===id;}) || {id:"more",ico:"⋯",label:"More"};
+    var b = el("button"); b.dataset.v = v.id;
+    b.innerHTML = "<span class='ico'>"+v.ico+"</span>"+v.label;
+    b.onclick = function(){ nav(v.id); };
+    tabs.appendChild(b);
+  });
+  $("sideFoot").textContent = S.site.domain + (DEMO ? " · DEMO MODE" : "");
+}
+
+function enterApp(){
+  $("authScreen").style.display = "none";
+  $("app").classList.add("on");
+  buildNav();
+  nav("home");
+}
+
+/* auth screen logic */
+var signupMode = false;
+$("flipLink").onclick = function(e){
+  e.preventDefault();
+  signupMode = !signupMode;
+  $("signupFields").style.display = signupMode ? "block" : "none";
+  $("authSub").textContent = signupMode ? "Create your iKomment site" : "Sign in to your dashboard";
+  $("authBtn").textContent = signupMode ? "Create site" : "Sign in";
+  $("flipText").textContent = signupMode ? "Already have an account?" : "New to iKomment?";
+  $("flipLink").textContent = signupMode ? "Sign in" : "Create your site";
+};
+$("authBtn").onclick = function(){
+  var btn = $("authBtn"); btn.disabled = true; $("authErr").textContent = "";
+  var body = { email: $("fEmail").value, password: $("fPass").value };
+  if(signupMode){ body.site_name = $("fSiteName").value; body.domain = $("fDomain").value; }
+  call("POST", signupMode ? "admin/signup" : "admin/login", body).then(function(r){
+    btn.disabled = false;
+    if(r.error){ $("authErr").textContent = r.error; return; }
+    S.site = r.site; S.key = r.admin_key;
+    S.settings = r.settings || {};
+    if(signupMode && !r.settings){ S.settings = demoData().settings; } // fresh defaults
+    save("ik_dash_key", S.key);
+    save("ik_dash_site", JSON.stringify(S.site));
+    enterApp();
+  });
+};
+
+/* auto-login: demo mode or saved session */
+(function(){
+  if(DEMO){
+    demoDB = demoData();
+    S.site = demoDB.site; S.key = demoDB.key; S.settings = demoDB.settings;
+    enterApp(); toast("Demo mode — data is simulated");
+    return;
+  }
+  var k = load("ik_dash_key"), s = load("ik_dash_site");
+  if(k && s){
+    S.key = k; S.site = JSON.parse(s);
+    call("GET","admin/settings",null,{}).then(function(r){
+      if(r.settings){ S.settings = r.settings; enterApp(); }
+    });
+  }
+})();
+</script>
+</body>
+</html>
