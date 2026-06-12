@@ -1,1 +1,494 @@
+/* ============================================================
+   iKomment — Comments Module (comments.js)
+   Loaded on demand by i.js. Pure vanilla JS, zero dependencies.
+   Renders the threaded comment widget, talks to the Worker API.
+   ============================================================ */
+(function () {
+  "use strict";
+  window.iKomment = window.iKomment || {};
 
+  /* ----------------------- styles -----------------------
+     Scoped under .ikw so we never fight the host site's CSS.
+     Fluid by default; breakpoints applied via container width
+     classes (ik-md / ik-sm / ik-xs) set by a ResizeObserver —
+     so the widget responds to ITS OWN width, not just the
+     screen. Works perfectly even inside narrow sidebars.   */
+  var CSS = "" +
+".ikw{--ik-accent:#4f7cff;--ik-bg:transparent;--ik-fg:#1a1d23;--ik-soft:#6b7280;--ik-line:rgba(128,128,140,.22);--ik-card:rgba(128,128,140,.07);--ik-r:8px;font:inherit;color:var(--ik-fg);max-width:100%;container-type:inline-size}" +
+".ikw.ik-dark{--ik-fg:#e7e9ee;--ik-soft:#9aa1ad;--ik-line:rgba(160,165,180,.22);--ik-card:rgba(160,165,180,.09)}" +
+".ikw *{box-sizing:border-box;margin:0}" +
+".ikw button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}" +
+/* composer */
+".ikw .ik-compose{border:1px solid var(--ik-line);border-radius:var(--ik-r);background:var(--ik-card);padding:.65rem .8rem;transition:border-color .15s}" +
+".ikw .ik-compose:focus-within{border-color:var(--ik-accent)}" +
+".ikw .ik-input{width:100%;min-height:1.6em;border:0;outline:0;background:transparent;color:inherit;font:inherit;font-size:1rem;resize:vertical}" +
+".ikw .ik-compose.ik-open .ik-input{min-height:4.5em}" +
+".ikw .ik-bar{display:none;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:.55rem}" +
+".ikw .ik-compose.ik-open .ik-bar{display:flex}" +
+".ikw .ik-fmt{display:flex;gap:.15rem}" +
+".ikw .ik-fmt button{min-width:2.2rem;min-height:2.2rem;border-radius:6px;color:var(--ik-soft);font-size:.85rem}" +
+".ikw .ik-fmt button:hover{background:var(--ik-card);color:var(--ik-fg)}" +
+".ikw .ik-name{flex:1;min-width:8rem;border:1px solid var(--ik-line);border-radius:6px;background:transparent;color:inherit;padding:.45rem .6rem;font-size:1rem}" +
+".ikw .ik-send{margin-left:auto;background:var(--ik-accent);color:#fff;border-radius:6px;padding:.5rem 1.1rem;font-weight:600;min-height:2.6rem}" +
+".ikw .ik-send:disabled{opacity:.5;cursor:default}" +
+".ikw .ik-login{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap}" +
+".ikw .ik-login-lbl{color:var(--ik-soft);font-size:.82rem}" +
+".ikw .ik-oauth{border:1px solid var(--ik-line);border-radius:6px;padding:.45rem .8rem;min-height:2.4rem;font-size:.85rem;font-weight:600}" +
+".ikw .ik-oauth:hover{border-color:var(--ik-accent);color:var(--ik-accent)}" +
+/* toolbar row */
+".ikw .ik-top{display:flex;align-items:baseline;gap:.6rem;margin:1.1rem 0 .8rem}" +
+".ikw .ik-count{font-weight:700}" +
+".ikw .ik-sort{margin-left:auto;color:var(--ik-soft);font-size:.85rem;display:flex;gap:.15rem}" +
+".ikw .ik-sort button{padding:.35rem .55rem;border-radius:6px;min-height:2rem}" +
+".ikw .ik-sort button.ik-on{color:var(--ik-accent);font-weight:600}" +
+/* comments */
+".ikw .ik-c{display:flex;gap:.6rem;padding:.6rem 0}" +
+".ikw .ik-av{width:2rem;height:2rem;border-radius:50%;background:var(--ik-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;user-select:none}" +
+".ikw .ik-body{flex:1;min-width:0}" +
+".ikw .ik-meta{display:flex;align-items:baseline;gap:.5rem;font-size:.82rem;flex-wrap:wrap}" +
+".ikw .ik-who{font-weight:600}" +
+".ikw .ik-when,.ikw .ik-edited{color:var(--ik-soft)}" +
+".ikw .ik-text{margin:.2rem 0 .3rem;line-height:1.55;font-size:.95rem;word-wrap:break-word;overflow-wrap:anywhere}" +
+".ikw .ik-text code{background:var(--ik-card);padding:.1em .35em;border-radius:4px;font-size:.88em}" +
+".ikw .ik-text a{color:var(--ik-accent)}" +
+".ikw .ik-acts{display:flex;align-items:center;gap:.15rem;color:var(--ik-soft);font-size:.82rem;flex-wrap:wrap}" +
+".ikw .ik-acts button{padding:.35rem .5rem;border-radius:6px;min-height:2rem;display:inline-flex;align-items:center;gap:.25rem}" +
+".ikw .ik-acts button:hover{background:var(--ik-card);color:var(--ik-fg)}" +
+".ikw .ik-acts .ik-voted{color:var(--ik-accent);font-weight:600}" +
+/* nesting */
+".ikw .ik-kids{border-left:2px solid var(--ik-line);margin-left:1rem;padding-left:.9rem}" +
+".ikw .ik-fold{color:var(--ik-soft);font-size:.8rem;padding:.3rem .5rem;border-radius:6px;min-height:2rem}" +
+".ikw .ik-more{color:var(--ik-accent);font-size:.85rem;font-weight:600;padding:.4rem 0;display:inline-block}" +
+/* states */
+".ikw .ik-pending{opacity:.65}" +
+".ikw .ik-tag{font-size:.72rem;background:var(--ik-card);color:var(--ik-soft);border-radius:99px;padding:.1rem .55rem}" +
+".ikw .ik-pin{color:var(--ik-accent)}" +
+".ikw .ik-new{animation:ikIn .5s ease}" +
+"@keyframes ikIn{from{background:color-mix(in srgb,var(--ik-accent) 14%,transparent)}to{background:transparent}}" +
+".ikw .ik-empty{color:var(--ik-soft);text-align:center;padding:1.4rem 0;font-size:.92rem}" +
+/* footer */
+".ikw .ik-foot{margin-top:1rem;padding-top:.6rem;border-top:1px solid var(--ik-line);text-align:right}" +
+".ikw .ik-foot a{color:var(--ik-soft);font-size:.72rem;text-decoration:none}" +
+/* ---- container breakpoints: tablet / mobile-L / mobile-S ---- */
+".ikw.ik-md .ik-kids{margin-left:.7rem;padding-left:.7rem}" +
+".ikw.ik-sm .ik-c{gap:.5rem}.ikw.ik-sm .ik-kids{margin-left:.45rem;padding-left:.55rem}" +
+".ikw.ik-sm .ik-bar{flex-direction:column;align-items:stretch}.ikw.ik-sm .ik-send{width:100%;margin:0}" +
+".ikw.ik-sm .ik-name{width:100%}" +
+".ikw.ik-sm .ik-login{width:100%}.ikw.ik-sm .ik-oauth{flex:1}" +
+".ikw.ik-xs .ik-av{width:1.6rem;height:1.6rem;font-size:.7rem}" +
+".ikw.ik-xs .ik-kids{margin-left:.3rem;padding-left:.45rem}" +
+".ikw.ik-xs .ik-sort{width:100%;margin:0;justify-content:space-between}" +
+".ikw.ik-xs .ik-top{flex-wrap:wrap}" +
+"@media (prefers-reduced-motion:reduce){.ikw .ik-new{animation:none}}";
+
+  /* ----------------------- tiny utils ----------------------- */
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function ago(ts) {
+    var s = Math.max(1, Math.floor(Date.now() / 1000 - ts));
+    if (s < 60) return "just now";
+    if (s < 3600) return Math.floor(s / 60) + "m ago";
+    if (s < 86400) return Math.floor(s / 3600) + "h ago";
+    if (s < 2592000) return Math.floor(s / 86400) + "d ago";
+    return new Date(ts * 1000).toLocaleDateString();
+  }
+  // identity persistence — survives revisits when storage is allowed,
+  // degrades gracefully (in-memory) when it isn't
+  var mem = {};
+  function store(k, v) { try { localStorage.setItem(k, v); } catch (e) { mem[k] = v; } }
+  function read(k) { try { return localStorage.getItem(k) || mem[k]; } catch (e) { return mem[k]; } }
+
+  /* ----------------------- transport -----------------------
+     All server talk goes through one function, so the demo page
+     can swap in a mock backend by defining window.iKommentTransport */
+  function api(base, site, method, path, body, qs) {
+    if (window.iKommentTransport)
+      return window.iKommentTransport(method, path, body, qs);
+    var url = base.replace(/\/cdn$/, "") + "/api/" + path +
+      (qs ? "?" + new URLSearchParams(Object.assign({ site: site }, qs)) : "");
+    var headers = { "content-type": "application/json" };
+    var id = read("ik_id_" + site);
+    if (id) headers["x-ikomment-user"] = id;
+    // SSO: the host page sets window.iKommentSSO = "<signed token>" server-side
+    if (window.iKommentSSO) headers["x-ikomment-sso"] = window.iKommentSSO;
+    return fetch(url, {
+      method: method,
+      headers: headers,
+      body: body ? JSON.stringify(Object.assign({ site: site }, body)) : undefined,
+    }).then(function (r) { return r.json(); });
+  }
+
+  /* ----------------------- the widget ----------------------- */
+  function Widget(node, cfg) {
+    var SITE = cfg.site, BASE = cfg.base;
+    var state = { posts: [], sort: "top", thread: null, settings: {}, myVotes: {} };
+    var pageUrl = location.href, pageTitle = document.title;
+
+    // inject styles once
+    if (!document.getElementById("ik-css")) {
+      var st = el("style"); st.id = "ik-css"; st.textContent = CSS;
+      document.head.appendChild(st);
+    }
+
+    var root = el("div", "ikw");
+    node.appendChild(root);
+
+    // dark/light: auto-detect host page background unless owner forces a mode
+    function applyTheme(mode) {
+      var dark;
+      if (mode === "dark") dark = true;
+      else if (mode === "light") dark = false;
+      else {
+        var bg = getComputedStyle(document.body).backgroundColor.match(/\d+/g) || [255, 255, 255];
+        dark = (+bg[0] * 299 + +bg[1] * 587 + +bg[2] * 114) / 1000 < 128;
+      }
+      root.classList.toggle("ik-dark", dark);
+    }
+
+    // container-width responsiveness (the widget adapts to its own box)
+    new ResizeObserver(function (en) {
+      var w = en[0].contentRect.width;
+      root.classList.toggle("ik-md", w <= 900);
+      root.classList.toggle("ik-sm", w <= 600);
+      root.classList.toggle("ik-xs", w <= 480);
+    }).observe(root);
+
+    /* ---------- sign-in via popup ---------- */
+
+    function emailBtn(bar) {
+      var b = el("button", "ik-oauth", "Email");
+      b.type = "button";
+      b.onclick = function () {
+        var row = el("div", "ik-login");
+        var inp = document.createElement("input");
+        inp.className = "ik-name"; inp.type = "email"; inp.placeholder = "you@example.com";
+        var go = el("button", "ik-oauth", "Send link"); go.type = "button";
+        var msg = el("span", "ik-login-lbl", "");
+        row.appendChild(inp); row.appendChild(go); row.appendChild(msg);
+        bar.replaceChild(row, b.parentNode === bar ? b : b);
+        inp.focus();
+        go.onclick = function () {
+          var em = inp.value.trim();
+          if (!em) { inp.focus(); return; }
+          go.disabled = true; msg.textContent = "Sending\u2026";
+          api(BASE, SITE, "POST", "auth/email/request", { email: em }).then(function (r) {
+            if (r.error) { msg.textContent = r.error; go.disabled = false; return; }
+            msg.textContent = "Check your inbox \u2014 waiting\u2026";
+            inp.disabled = true; go.style.display = "none";
+            var tries = 0;
+            var poll = setInterval(function () {
+              if (tries++ > 100) { clearInterval(poll); msg.textContent = "Link expired \u2014 try again."; return; }
+              api(BASE, SITE, "GET", "auth/email/status", null, { r: r.request_id }).then(function (st) {
+                if (st.status === "done") {
+                  clearInterval(poll);
+                  store("ik_id_" + SITE, st.identity.user_id + ":" + st.identity.token);
+                  store("ik_name_" + SITE, st.identity.name);
+                  render();
+                } else if (st.status === "expired") {
+                  clearInterval(poll); msg.textContent = "Link expired \u2014 try again.";
+                }
+              });
+            }, 3000);
+          });
+        };
+      };
+      return b;
+    }
+
+    function oauthBtn(provider, label) {
+      var b = el("button", "ik-oauth", label);
+      b.type = "button";
+      b.onclick = function () {
+        var apiBase = BASE.replace(/\/cdn$/, "");
+        var w = 480, h = 640;
+        window.open(
+          apiBase + "/api/auth/" + provider + "?site=" + SITE,
+          "ik-login",
+          "width=" + w + ",height=" + h +
+          ",left=" + Math.max(0, (screen.width - w) / 2) +
+          ",top=" + Math.max(0, (screen.height - h) / 2)
+        );
+      };
+      return b;
+    }
+    // the popup posts the credential back here when sign-in completes
+    window.addEventListener("message", function (e) {
+      var d = e.data;
+      if (!d || d.type !== "ikomment-auth") return;
+      store("ik_id_" + SITE, d.user_id + ":" + d.token);
+      store("ik_name_" + SITE, d.name);
+      render(); // composer re-renders in signed-in state
+    });
+
+    /* ---------- composer ---------- */
+    function composer(parentId, onDone) {
+      var box = el("div", "ik-compose");
+      var ta = el("textarea", "ik-input");
+      ta.placeholder = parentId ? "Write a reply…" : "Join the discussion…";
+      ta.rows = 1;
+      var bar = el("div", "ik-bar");
+      // formatting buttons only appear if the owner enabled the toggle (off by default)
+      if (state.settings.formatting_toolbar === 1) {
+        var fmt = el("div", "ik-fmt");
+        [["B", "**", "**"], ["i", "*", "*"], ["<>", "`", "`"], ["🔗", "[", "](https://)"]]
+          .forEach(function (f) {
+            var b = el("button", null, f[0]);
+            b.type = "button"; b.title = "Format";
+            b.onclick = function () {
+              var s = ta.selectionStart, e = ta.selectionEnd, v = ta.value;
+              ta.value = v.slice(0, s) + f[1] + v.slice(s, e) + f[2] + v.slice(e);
+              ta.focus();
+            };
+            fmt.appendChild(b);
+          });
+        bar.appendChild(fmt);
+      }
+      var name = el("input", "ik-name");
+      name.placeholder = "Your name";
+      name.value = read("ik_name_" + SITE) || "";
+      var send = el("button", "ik-send", parentId ? "Reply" : "Comment");
+      send.type = "button";
+
+      var identified = !!read("ik_id_" + SITE) || !!window.iKommentSSO;
+      var canGuest = state.settings.guest_posting === 1;
+
+      if (!identified) {
+        if (state.settings.login_google === 1 || state.settings.login_github === 1 || state.settings.login_magic_link === 1) {
+          var login = el("div", "ik-login");
+          login.appendChild(el("span", "ik-login-lbl", canGuest ? "or sign in:" : "Sign in to comment:"));
+          if (state.settings.login_google === 1) login.appendChild(oauthBtn("google", "Google"));
+          if (state.settings.login_github === 1) login.appendChild(oauthBtn("github", "GitHub"));
+          if (state.settings.login_magic_link === 1) login.appendChild(emailBtn(login));
+          bar.appendChild(login);
+        }
+        if (canGuest) bar.appendChild(name); // guest path: just a name
+      }
+      if (identified || canGuest) bar.appendChild(send);
+      if (!identified && !canGuest &&
+          state.settings.login_google !== 1 && state.settings.login_github !== 1 &&
+          state.settings.login_magic_link !== 1) {
+        // nothing is enabled — owner hasn't configured any way to comment yet
+        bar.appendChild(el("span", "ik-login-lbl", "Commenting is currently closed."));
+      }
+      box.appendChild(ta); box.appendChild(bar);
+      ta.addEventListener("focus", function () { box.classList.add("ik-open"); });
+
+      send.onclick = function () {
+        var text = ta.value.trim();
+        if (!text) return;
+        var guestName = name.value.trim() || read("ik_name_" + SITE);
+        if (!read("ik_id_" + SITE) && !guestName) { name.focus(); return; }
+        send.disabled = true; send.textContent = "Posting…";
+        api(BASE, SITE, "POST", "post", {
+          url: pageUrl, title: pageTitle, parent_id: parentId || null,
+          body: text, guest_name: guestName,
+        }).then(function (res) {
+          send.disabled = false; send.textContent = parentId ? "Reply" : "Comment";
+          if (res.error) { alert(res.error); return; }
+          if (res.identity) {
+            store("ik_id_" + SITE, res.identity.user_id + ":" + res.identity.token);
+            store("ik_name_" + SITE, guestName);
+          }
+          ta.value = ""; box.classList.remove("ik-open");
+          res.post._mine = true; res.post._new = true;
+          state.posts.push(res.post);
+          if (res.held_for_review) res.post._held = true;
+          render();
+          if (onDone) onDone();
+        });
+      };
+      return box;
+    }
+
+    /* ---------- one comment ---------- */
+    function renderPost(p, kidsByParent) {
+      var c = el("div", "ik-c" + (p.status === "pending" ? " ik-pending" : "") + (p._new ? " ik-new" : ""));
+      p._new = false;
+      var av = el("div", "ik-av", (p.display_name || "?").slice(0, 1).toUpperCase());
+      var body = el("div", "ik-body");
+      var meta = el("div", "ik-meta");
+      meta.appendChild(el("span", "ik-who", p.display_name));
+      meta.appendChild(el("span", "ik-when", ago(p.created_at)));
+      if (p.edited_at) meta.appendChild(el("span", "ik-edited", "(edited)"));
+      if (p.is_pinned) meta.appendChild(el("span", "ik-tag ik-pin", "📌 Pinned"));
+      if (p.status === "pending") meta.appendChild(el("span", "ik-tag", "Awaiting approval"));
+
+      var text = el("div", "ik-text");
+      text.innerHTML = p.body_html; // server-side escaped — safe by design
+
+      var acts = el("div", "ik-acts");
+      if (state.settings.voting !== 0) {
+        var up = el("button", state.myVotes[p.id] === 1 ? "ik-voted" : "", "▲ " + (p.up_votes || 0));
+        var down = el("button", state.myVotes[p.id] === -1 ? "ik-voted" : "", "▼ " + (p.down_votes || 0));
+        up.onclick = function () { vote(p, 1, up, down); };
+        down.onclick = function () { vote(p, -1, up, down); };
+        acts.appendChild(up); acts.appendChild(down);
+      }
+      var reply = el("button", null, "Reply");
+      reply.onclick = function () {
+        if (body.querySelector(".ik-compose")) return;
+        body.appendChild(composer(p.id));
+      };
+      acts.appendChild(reply);
+      if (p._mine) {
+        var edit = el("button", null, "Edit");
+        edit.onclick = function () { startEdit(p, text); };
+        var del = el("button", null, "Delete");
+        del.onclick = function () {
+          if (!confirm("Delete this comment?")) return;
+          api(BASE, SITE, "POST", "delete", { post_id: p.id }).then(function (r) {
+            if (!r.error) { p.status = "deleted"; render(); }
+          });
+        };
+        acts.appendChild(edit); acts.appendChild(del);
+      } else {
+        var flag = el("button", null, "⚑");
+        flag.title = "Report";
+        flag.onclick = function () { flag.textContent = "Reported"; flag.disabled = true; };
+        acts.appendChild(flag);
+      }
+
+      body.appendChild(meta); body.appendChild(text); body.appendChild(acts);
+
+      // children
+      var kids = kidsByParent[p.id];
+      if (kids && kids.length) {
+        var wrap = el("div", "ik-kids");
+        if (p.depth >= 5) {
+          // deep nesting flattens into "Continue thread" — never a 2-word column
+          var more = el("button", "ik-more", "Continue thread (" + kids.length + ") →");
+          more.onclick = function () {
+            wrap.replaceChild(buildList(kids, kidsByParent), more);
+          };
+          wrap.appendChild(more);
+        } else {
+          var fold = el("button", "ik-fold", "− Hide " + kids.length + " repl" + (kids.length > 1 ? "ies" : "y"));
+          var list = buildList(kids, kidsByParent);
+          fold.onclick = function () {
+            var hidden = list.style.display === "none";
+            list.style.display = hidden ? "" : "none";
+            fold.textContent = (hidden ? "− Hide " : "+ Show ") + kids.length + " repl" + (kids.length > 1 ? "ies" : "y");
+          };
+          wrap.appendChild(fold); wrap.appendChild(list);
+        }
+        body.appendChild(wrap);
+      }
+
+      c.appendChild(av); c.appendChild(body);
+      return c;
+    }
+
+    function buildList(posts, kidsByParent) {
+      var box = el("div");
+      posts.forEach(function (p) {
+        if (p.status !== "deleted") box.appendChild(renderPost(p, kidsByParent));
+      });
+      return box;
+    }
+
+    function vote(p, v, upBtn, downBtn) {
+      var prev = state.myVotes[p.id] || 0;
+      var next = prev === v ? 0 : v;
+      // optimistic update
+      p.up_votes += (next === 1 ? 1 : 0) - (prev === 1 ? 1 : 0);
+      p.down_votes += (next === -1 ? 1 : 0) - (prev === -1 ? 1 : 0);
+      state.myVotes[p.id] = next;
+      upBtn.textContent = "▲ " + p.up_votes; downBtn.textContent = "▼ " + p.down_votes;
+      upBtn.className = next === 1 ? "ik-voted" : "";
+      downBtn.className = next === -1 ? "ik-voted" : "";
+      api(BASE, SITE, "POST", "vote", { post_id: p.id, value: next }).then(function (r) {
+        if (r.error) alert(r.error);
+      });
+    }
+
+    function startEdit(p, textNode) {
+      var ta = el("textarea", "ik-input");
+      ta.value = (p.body || textNode.textContent);
+      ta.style.minHeight = "4em";
+      var save = el("button", "ik-send", "Save changes");
+      save.style.marginTop = ".4rem";
+      textNode.replaceWith(ta); ta.after(save); ta.focus();
+      save.onclick = function () {
+        api(BASE, SITE, "POST", "edit", { post_id: p.id, body: ta.value }).then(function (r) {
+          if (r.error) { alert(r.error); return; }
+          p.body = ta.value; p.body_html = r.body_html; p.edited_at = 1;
+          render();
+        });
+      };
+    }
+
+    /* ---------- full render ---------- */
+    function render() {
+      root.textContent = "";
+      applyTheme(state.settings.theme_mode);
+      if (state.settings.accent_color)
+        root.style.setProperty("--ik-accent", state.settings.accent_color);
+
+      root.appendChild(composer(null));
+
+      var live = state.posts.filter(function (p) { return p.status !== "deleted"; });
+      var top = el("div", "ik-top");
+      top.appendChild(el("span", "ik-count",
+        live.length ? live.length + " comment" + (live.length > 1 ? "s" : "") : "Comments"));
+      if (state.settings.sorting !== 0) {
+        var sort = el("div", "ik-sort");
+        [["top", "Top"], ["new", "Newest"], ["old", "Oldest"]].forEach(function (s) {
+          var b = el("button", state.sort === s[0] ? "ik-on" : "", s[1]);
+          b.onclick = function () { state.sort = s[0]; render(); };
+          sort.appendChild(b);
+        });
+        top.appendChild(sort);
+      }
+      root.appendChild(top);
+
+      // group children under parents
+      var kidsByParent = {}, roots = [];
+      live.forEach(function (p) {
+        if (p.parent_id) (kidsByParent[p.parent_id] = kidsByParent[p.parent_id] || []).push(p);
+        else roots.push(p);
+      });
+      var sorters = {
+        top: function (a, b) { return (b.is_pinned - a.is_pinned) || ((b.up_votes - b.down_votes) - (a.up_votes - a.down_votes)); },
+        new: function (a, b) { return (b.is_pinned - a.is_pinned) || (b.created_at - a.created_at); },
+        old: function (a, b) { return (b.is_pinned - a.is_pinned) || (a.created_at - b.created_at); },
+      };
+      roots.sort(sorters[state.sort]);
+
+      if (!roots.length) root.appendChild(el("div", "ik-empty", "Be the first to comment."));
+      else root.appendChild(buildList(roots, kidsByParent));
+
+      var foot = el("div", "ik-foot");
+      var a = el("a", null, "Powered by iKomment");
+      a.href = "https://ikomment.com"; a.rel = "noopener"; a.target = "_blank";
+      foot.appendChild(a);
+      root.appendChild(foot);
+    }
+
+    /* ---------- boot + live updates ---------- */
+    function load() {
+      api(BASE, SITE, "GET", "thread", null, { url: pageUrl, title: pageTitle })
+        .then(function (res) {
+          if (res.disabled) { node.style.display = "none"; return; }
+          state.thread = res.thread_id;
+          state.settings = res.settings || {};
+          // keep optimistic posts that the refetch may not show yet
+          var mine = state.posts.filter(function (p) { return p._mine; });
+          var ids = {};
+          state.posts = (res.posts || []).map(function (p) { ids[p.id] = 1; return p; });
+          mine.forEach(function (p) { if (!ids[p.id]) state.posts.push(p); });
+          render();
+        });
+    }
+    load();
+    // live updates: light polling for MVP (Durable Objects upgrade in Stage 8)
+    if (!window.iKommentTransport) setInterval(load, 20000);
+  }
+
+  window.iKomment.comments = {
+    mount: function (node, cfg) { new Widget(node, cfg); },
+  };
+})();
