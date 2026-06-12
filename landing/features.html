@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Features — iKomment</title>
+<meta name="description" content="The complete iKomment feature list: comments, Q&A, forums, live chat, five sign-in methods, AI moderation, and the engineering working underneath.">
+<link rel="canonical" href="https://ikomment.com/features.html">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Features — iKomment">
+<meta property="og:description" content="The complete iKomment feature list: comments, Q&A, forums, live chat, five sign-in methods, AI moderation, and the engineering working underneath.">
+<meta property="og:url" content="https://ikomment.com/features.html">
+<meta property="og:site_name" content="iKomment">
+<meta name="twitter:card" content="summary">
+<style>
+:root{--bg:#f7fafd;--card:#ffffff;--ink:#16222e;--soft:#5b6b7b;--line:#dde7f0;
+--accent:#2f7ee8;--accent-soft:#e8f1fc;--good:#1aa86b;--r:14px}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65}
+a{color:var(--accent);text-decoration:none}
+.wrap{max-width:1000px;margin:0 auto;padding:0 clamp(1rem,4vw,2rem)}
+header{background:rgba(247,250,253,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+nav{display:flex;align-items:center;gap:1rem;padding:.85rem 0}
+.logo{font-weight:800;font-size:1.2rem;letter-spacing:-.02em;color:var(--ink)}
+.logo span{color:var(--accent)}
+nav .links{margin-left:auto;display:flex;gap:clamp(.7rem,2.5vw,1.4rem);font-size:.9rem;flex-wrap:wrap}
+nav .links a{color:var(--soft);padding:.3rem .1rem;min-height:32px;display:inline-flex;align-items:center}
+nav .links a:hover,nav .links a.on{color:var(--accent)}
+main{padding:clamp(1.8rem,5vw,3.5rem) 0 clamp(2.5rem,6vw,4rem)}
+h1{font-size:clamp(1.6rem,5vw,2.6rem);line-height:1.15;letter-spacing:-.02em}
+h2{font-size:clamp(1.25rem,3.5vw,1.7rem);margin:2.4rem 0 .7rem;letter-spacing:-.01em}
+h3{font-size:1.05rem;margin:1.4rem 0 .4rem}
+p.lead{color:var(--soft);font-size:clamp(.95rem,2.5vw,1.1rem);max-width:640px;margin-top:.6rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;background:var(--accent);color:#fff;border-radius:10px;padding:.8rem 1.4rem;font-weight:600;min-height:48px}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:var(--accent-soft);color:var(--accent)}
+.cta{display:flex;gap:.8rem;flex-wrap:wrap;margin-top:1.4rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1.3rem}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.2rem}
+.grid .card .ico{font-size:1.5rem}
+.grid .card h3{margin:.4rem 0 .25rem}
+.grid .card p{color:var(--soft);font-size:.88rem}
+ul.clean{list-style:none;padding:0}
+ul.clean li{display:flex;gap:.55rem;padding:.32rem 0;color:var(--soft);font-size:.93rem;align-items:flex-start}
+ul.clean li::before{content:"\2713";color:var(--good);font-weight:700;flex-shrink:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:.2rem 2rem}
+table{width:100%;border-collapse:collapse;font-size:.88rem;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+th,td{padding:.65rem .6rem;text-align:center;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--accent-soft);color:var(--ink);font-weight:600;font-size:.8rem}
+tr:last-child td{border-bottom:0}
+td.you{color:var(--good);font-weight:600}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:1rem}
+.pill{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:99px;font-size:.72rem;padding:.18rem .7rem;font-weight:700;letter-spacing:.03em}
+.muted{color:var(--soft);font-size:.88rem}
+footer{border-top:1px solid var(--line);padding:1.8rem 0;color:var(--soft);font-size:.85rem;display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between;background:var(--card)}
+.crumbs{font-size:.82rem;color:var(--soft);margin-bottom:1rem}
+.crumbs a{color:var(--soft)} .crumbs a:hover{color:var(--accent)}
+@media (max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:600px){.grid{grid-template-columns:1fr}.two{grid-template-columns:1fr}.cta .btn{width:100%}}
+@media (max-width:480px){nav{flex-wrap:wrap}.card{padding:1rem}footer{flex-direction:column;text-align:center}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><nav>
+<a class="logo" href="/">i<span>Komment</span></a>
+<div class="links">
+<a href="/features.html" class="on">Features</a>
+<a href="/demos.html">Demos</a>
+<a href="/roadmap.html">Roadmap</a>
+<a href="/license.html">License</a>
+<a href="https://github.com/ikomment/ikomment">GitHub</a>
+</div></nav></div></header>
+<main><div class="wrap">
+
+<div class="crumbs"><a href="/">Home</a> / Features</div>
+<h1>Every feature. Nothing paywalled.</h1>
+<p class="lead">The complete list &mdash; what your readers see, what site owners control, and the engineering working silently underneath.</p>
+
+<h2>&#128172; Comments</h2>
+<div class="card"><div class="two"><ul class="clean">
+<li>Deeply nested replies, unlimited depth</li>
+<li>Collapsible threads; deep chains flatten into &ldquo;Continue thread &rarr;&rdquo;</li>
+<li>Live updates &mdash; no page refresh</li>
+<li>Up/down votes with instant feedback</li>
+<li>Edit &amp; delete your own (owner-set time window)</li>
+<li>Markdown: bold, italic, code, safe links</li></ul>
+<ul class="clean">
+<li>Optional formatting toolbar (off by default)</li>
+<li>Sorting: Top &middot; Newest &middot; Oldest</li>
+<li>Pinned comments</li>
+<li>Report/flag on every comment</li>
+<li>Comment-count badges for listings</li>
+<li>Optimistic posting &mdash; comments appear instantly</li></ul></div></div>
+
+<h2>&#10067; Q&amp;A</h2>
+<div class="card"><ul class="clean">
+<li>Question + answers format, separate from chatter</li>
+<li>Accepted answer pinned to top with &#9989;</li>
+<li>Answers ranked by votes; Top/Newest filter</li>
+<li>Nested comment discussion under each answer</li>
+<li>Answered / unanswered status at a glance</li></ul></div>
+
+<h2>&#128483;&#65039; Forums &amp; live chat</h2>
+<div class="card"><div class="two"><ul class="clean">
+<li>Owner-managed categories/boards</li>
+<li>Visitor-created threads with titles</li>
+<li>Activity-sorted thread lists with reply counts</li>
+<li>&#128204; Pinned and &#128274; locked threads</li></ul>
+<ul class="clean">
+<li>Member profiles: avatar, joined date, recent posts</li>
+<li>Real-time chat room per category</li>
+<li>Presence counter (&ldquo;3 people here&rdquo;)</li>
+<li>Chat history survives between visits</li></ul></div></div>
+
+<h2>&#128274; Identity &mdash; five ways in, all owner toggles</h2>
+<div class="card"><ul class="clean">
+<li><b>Guest posting</b> &mdash; just a name; off by default, typed confirmation to enable; returning guests are remembered</li>
+<li><b>Email sign-in links</b> &mdash; no passwords; works even if the link is opened on another device; Resend or SendGrid, your choice</li>
+<li><b>Google</b> and <b>GitHub</b> &mdash; one-tap popup sign-in</li>
+<li><b>SSO</b> &mdash; your existing logged-in users comment seamlessly; one-page integration, cryptographically signed</li></ul></div>
+
+<h2>&#128737;&#65039; Moderation</h2>
+<div class="card"><div class="two"><ul class="clean">
+<li>AI spam detection &mdash; free, every plan</li>
+<li>Pre-moderation with automatic trust levels &mdash; proven commenters skip the queue, invisibly</li>
+<li>Approve/spam straight from your email inbox</li>
+<li>Word filters: hold for review or block outright</li></ul>
+<ul class="clean">
+<li>Shadow bans &mdash; banned users never know</li>
+<li>One-click nuke: erase a user's entire history</li>
+<li>Swipe-to-moderate on mobile</li>
+<li>Complete audit trail of every action, human or AI</li></ul></div></div>
+
+<h2>&#127912; Customisation &amp; control</h2>
+<div class="card"><div class="two"><ul class="clean">
+<li>Auto dark/light &mdash; reads your site's actual colours</li>
+<li>Accent colour, font, corner roundness &mdash; live preview</li>
+<li>Adapts to its own container width (sidebars included)</li>
+<li>Fully fluid: 320px phones to ultrawide monitors</li></ul>
+<ul class="clean">
+<li>Every feature is a dashboard toggle</li>
+<li>Per-page overrides (e.g. comments off on one article)</li>
+<li>Typed confirmation guards consequential settings</li>
+<li>Changes go live on your site within seconds</li></ul></div></div>
+
+<h2>&#128229; Migration</h2>
+<div class="card"><ul class="clean">
+<li>One-click Disqus import &mdash; upload the export straight from your email, even still zipped</li>
+<li>Nesting, names, emails and timestamps preserved; Disqus spam left behind</li>
+<li>Runs in your browser with a progress bar &mdash; works from a phone</li></ul></div>
+
+<h2 id="backend">&#9881;&#65039; The invisible greatness &mdash; what works in the dark</h2>
+<p class="lead" style="margin-bottom:.8rem">Things you'll never click on, all working on every single comment:</p>
+<div class="grid">
+<div class="card"><h3>1.1KB loader</h3><p>Visitors download a tiny loader; each module fetches lazily, only on pages that use it, just before it's scrolled into view.</p></div>
+<div class="card"><h3>Pre-rendered at the edge</h3><p>Comments are converted to ready-to-display HTML server-side and cached at the network edge nearest each reader. No spinners.</p></div>
+<div class="card"><h3>Injection-proof</h3><p>Every comment is sanitised before storage &mdash; script tags, event handlers and hostile links are neutralised. Imported content too.</p></div>
+<div class="card"><h3>Signed email links</h3><p>Moderation and sign-in links are cryptographically signed and expire &mdash; a forwarded or tampered link is worthless.</p></div>
+<div class="card"><h3>Failure-proof AI</h3><p>If the spam model is ever unavailable, comments fall back to your normal moderation rules. An AI outage can never silence your site.</p></div>
+<div class="card"><h3>Honest vote counting</h3><p>One vote per person per post, enforced by the database itself &mdash; counters update by difference and can't drift.</p></div>
+<div class="card"><h3>Secrets stay secret</h3><p>API keys live as deployment secrets, never in the database &mdash; a data leak can't expose your email or login credentials.</p></div>
+<div class="card"><h3>Built to travel</h3><p>Data access flows through a platform adapter, so the planned Docker version swaps one layer &mdash; not the product.</p></div>
+<div class="card"><h3>Accountable by design</h3><p>Every moderation action &mdash; by you, or by the AI &mdash; is written to a permanent audit log.</p></div>
+</div>
+
+</div></main>
+<footer><div class="wrap" style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between;width:100%">
+<div>&copy; 2026 iKomment &middot; <a href="/license.html">Elastic License 2.0 + attribution</a></div>
+<div><a href="https://github.com/ikomment/ikomment">GitHub</a> &middot; <a href="/roadmap.html">Roadmap</a> &middot; <a href="https://github.com/ikomment/ikomment/blob/main/docs/SETUP.md">Docs</a> &middot; <a href="/waitlist.html">Cloud waitlist</a></div>
+</div></footer>
+</body>
+</html>
