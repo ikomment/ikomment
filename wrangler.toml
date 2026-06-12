@@ -1,0 +1,49 @@
+# iKomment — privacy-first comments, Q&A & forums · https://ikomment.com
+# iKomment — Cloudflare deployment config
+# This file tells Cloudflare: "here's my Worker, here's its database and cache"
+
+name = "ikomment-api"
+main = "worker.js"
+compatibility_date = "2026-06-01"
+
+# D1 database binding — create with:  npx wrangler d1 create ikomment
+# then paste the database_id Cloudflare gives you below
+[[d1_databases]]
+binding = "DB"
+database_name = "ikomment"
+database_id = "PASTE_YOUR_D1_ID_HERE"
+
+# KV cache binding — create with:  npx wrangler kv namespace create CACHE
+[[kv_namespaces]]
+binding = "KV"
+id = "PASTE_YOUR_KV_ID_HERE"
+
+# OAuth credentials — set these as SECRETS (never commit real values):
+#   npx wrangler secret put GOOGLE_CLIENT_ID
+#   npx wrangler secret put GOOGLE_CLIENT_SECRET     (Google Cloud Console — desktop needed)
+#   npx wrangler secret put GITHUB_CLIENT_ID
+#   npx wrangler secret put GITHUB_CLIENT_SECRET     (github.com/settings/developers — works on mobile)
+# OAuth callback URLs to register with each provider:
+#   https://YOUR-WORKER-DOMAIN/api/auth/google/callback
+#   https://YOUR-WORKER-DOMAIN/api/auth/github/callback
+
+# Workers AI binding — powers the built-in spam detection (free in both plans)
+[ai]
+binding = "AI"
+
+# Email moderation via Resend — set as a secret when the owner enables the feature:
+#   npx wrangler secret put RESEND_API_KEY     (resend.com — works on mobile;
+#   domain DNS verification happens in your Cloudflare dashboard, also mobile-friendly)
+
+# Durable Objects — live chat rooms (Stage 8)
+[[durable_objects.bindings]]
+name = "CHAT"
+class_name = "ChatRoom"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChatRoom"]
+
+# Email provider keys — set ONLY the one matching your dashboard choice:
+#   npx wrangler secret put RESEND_API_KEY      (resend.com — default)
+#   npx wrangler secret put SENDGRID_API_KEY    (sendgrid.com — alternative)
