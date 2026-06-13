@@ -77,13 +77,9 @@ Full guides in [`docs/`](docs/): [Setup](docs/SETUP.md) ·
 
 ## Live demos
 
-Open these straight from the repo — no deployment needed:
+Try all four demos live — comments, Q&A, forums + chat, and the admin dashboard — with simulated data. Nothing to install:
 
-- [`demos/ikomment-demo.html`](demos/ikomment-demo.html) — Comments
-- [`demos/ikomment-qa-demo.html`](demos/ikomment-qa-demo.html) — Q&A
-- [`demos/ikomment-forum-demo.html`](demos/ikomment-forum-demo.html) — Forums + chat
-- [`dashboard/dashboard.html`](dashboard/dashboard.html) — the admin
-  dashboard (opens in demo mode with simulated data)
+**[→ Try the demos at ikomment.com](https://ikomment.com/demos.html)**
 
 ## License
 
